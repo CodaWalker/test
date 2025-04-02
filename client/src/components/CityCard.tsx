@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { useSpring, animated } from "react-spring";
-import { Info, ArrowLeft, Heart, X, MapPin } from "lucide-react";
+import { Info, ArrowLeft, Heart, X, MapPin, Image, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,8 @@ const CityCard = ({
 }: CityCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [hoveringRoute, setHoveringRoute] = useState<number | null>(null);
+  const [showPoiGallery, setShowPoiGallery] = useState(false);
+  const [currentPoiIndex, setCurrentPoiIndex] = useState(0);
   
   const vibrate = useVibrate();
   
@@ -67,6 +69,25 @@ const CityCard = ({
   const handleDislike = () => {
     vibrate(100);
     onSwipe("left");
+  };
+  
+  const togglePoiGallery = () => {
+    setShowPoiGallery(!showPoiGallery);
+    vibrate(50);
+  };
+  
+  const nextPoi = () => {
+    if (pois.length > 0) {
+      setCurrentPoiIndex((prevIndex) => (prevIndex + 1) % pois.length);
+      vibrate(30);
+    }
+  };
+  
+  const prevPoi = () => {
+    if (pois.length > 0) {
+      setCurrentPoiIndex((prevIndex) => (prevIndex - 1 + pois.length) % pois.length);
+      vibrate(30);
+    }
   };
 
   return (
