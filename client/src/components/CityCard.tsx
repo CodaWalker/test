@@ -270,32 +270,13 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
                     </div>
                   </div>
                   
-                  {/* Информация о выбранном POI */}
-                  {selectedPoi && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-800/90 p-3 shadow-lg rounded-t-xl">
-                      <div className="flex items-start">
-                        <div className="flex-1 pr-2">
-                          <h4 className="font-semibold dark:text-white">{selectedPoi.name}</h4>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
-                            {selectedPoi.description}
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {selectedPoi.tags.map((tag, idx) => (
-                              <div key={idx} className="text-xs px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-700 rounded">
-                                {tag}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <button 
-                          className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                          onClick={() => setSelectedPoi(null)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
+                  {/* Кнопка-подсказка для выбора POI */}
+                  {!selectedPoi && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-neutral-800/90 py-2 px-4 rounded-full shadow-md">
+                      <p className="text-xs text-neutral-600 dark:text-neutral-300 flex items-center">
+                        <span className="mr-1">Нажмите на точку для просмотра</span>
+                        <Info size={12} className="text-primary" />
+                      </p>
                     </div>
                   )}
                 </div>
@@ -316,19 +297,39 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
           {/* Фон карты с различными стилями */}
           {showMap && (
             <div 
-              className="absolute inset-0 z-5"
-              style={{ 
-                backgroundImage: mapStyle === "default" 
-                  ? "url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')" 
-                  : mapStyle === "satellite" 
-                    ? "url('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')"
-                    : "url('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')",
-                backgroundSize: "cover",
+              className="absolute inset-0 z-5 overflow-hidden"
+            >
+              {/* Симуляция карты с разными стилями */}
+              <div 
+                className="absolute inset-0 transition-all duration-300"
+                style={{ 
+                  backgroundImage: 
+                    mapStyle === "default" 
+                      ? `url('https://images.pexels.com/photos/4215110/pexels-photo-4215110.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750')` 
+                      : mapStyle === "satellite" 
+                        ? `url('https://images.pexels.com/photos/3760564/pexels-photo-3760564.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750')`
+                        : `url('https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750')`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  opacity: 0.5,
+                  transform: `scale(${mapZoom})`,
+                  filter: `brightness(${mapZoom * 0.2 + 0.8}) contrast(${mapZoom * 0.3 + 0.7})`,
+                  backgroundColor: mapStyle === "default" ? "#f5f5f5" : mapStyle === "satellite" ? "#373237" : "#e9eee9"
+                }}
+              />
+              
+              {/* Стилизация карты в соответствии с выбранным стилем */}
+              <div className="absolute inset-0" style={{ 
+                opacity: 0.3, 
+                backgroundSize: `${20 * mapZoom}px ${20 * mapZoom}px`,
                 backgroundPosition: "center",
-                opacity: 0.7,
-                filter: `contrast(${mapZoom * 0.3 + 0.7}) brightness(${mapZoom * 0.2 + 0.8})`
-              }}
-            />
+                backgroundImage: mapStyle === "default" 
+                  ? `linear-gradient(to right, #ccc 1px, transparent 1px), 
+                     linear-gradient(to bottom, #ccc 1px, transparent 1px)`
+                  : mapStyle === "satellite" ? "none" : `
+                     radial-gradient(circle, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 20%, transparent 30%)`
+              }}></div>
+            </div>
           )}
           
           {/* Градиент для фото. В режиме карты показываем только верхнюю часть */}
@@ -368,8 +369,12 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="absolute right-4 top-4 flex flex-wrap gap-1 justify-end"
-                  style={{ left: "auto", width: "auto" }}
+                  className="absolute top-4 right-4 flex flex-wrap gap-1 justify-end"
+                  style={{ 
+                    left: "auto", 
+                    width: "auto", 
+                    zIndex: 40 // Повышаем z-index, чтобы теги были видны
+                  }}
                 >
                   {city.tags.slice(0, 3).map((tag, index) => (
                     <Badge 
@@ -458,27 +463,102 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
         </div>
         
         {/* Content Section */}
-        <div className="p-4 flex-1">
-          <h3 className="font-semibold text-lg dark:text-white mb-2">Описание</h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-300">
-            {city.description}
-          </p>
-          
-          {/* Информация о погоде и прочем */}
-          {city.localInfo && (
-            <div className="mt-3">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="text-neutral-500 dark:text-neutral-400">Погода:</div>
-                <div className="font-medium">{city.localInfo.weather}</div>
-                <div className="text-neutral-500 dark:text-neutral-400">Язык:</div>
-                <div className="font-medium">{city.localInfo.language}</div>
-                <div className="text-neutral-500 dark:text-neutral-400">Валюта:</div>
-                <div className="font-medium">{city.localInfo.currency}</div>
-                <div className="text-neutral-500 dark:text-neutral-400">Лучший сезон:</div>
-                <div className="font-medium">{city.localInfo.bestSeason}</div>
-              </div>
-            </div>
-          )}
+        <div className="p-4 flex-1 overflow-auto">
+          <AnimatePresence mode="wait">
+            {/* Содержимое будет зависеть от выбора POI и режима карты */}
+            {showMap && selectedPoi ? (
+              // Показываем информацию о выбранном POI
+              <motion.div
+                key="poi-details"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="relative"
+              >
+                <div className="flex items-center mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mr-2 text-primary p-0 h-8 w-8"
+                    onClick={() => setSelectedPoi(null)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
+                  </Button>
+                  <h3 className="font-semibold text-lg dark:text-white">
+                    {selectedPoi.name}
+                  </h3>
+                </div>
+                
+                <div className="flex items-center mb-2">
+                  <MapPin className="text-primary mr-1" size={16} />
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Достопримечательность в городе {city.name}
+                  </p>
+                </div>
+                
+                <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-3">
+                  {selectedPoi.description}
+                </p>
+                
+                {/* Категории/теги POI */}
+                <div className="mb-3">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Категории:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedPoi.tags.map((tag, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="secondary"
+                        className="bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Дополнительная информация */}
+                <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-md">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Рекомендации:</p>
+                  <ul className="text-sm text-neutral-600 dark:text-neutral-300 pl-5 list-disc">
+                    <li>Лучшее время для посещения: {city.localInfo?.bestSeason || "Любое время года"}</li>
+                    <li>Примерное время на осмотр: 1-2 часа</li>
+                    <li>Средняя стоимость билета: от 300₽</li>
+                  </ul>
+                </div>
+              </motion.div>
+            ) : (
+              // Стандартное описание города
+              <motion.div
+                key="city-details"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                <h3 className="font-semibold text-lg dark:text-white mb-2">Описание</h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">
+                  {city.description}
+                </p>
+                
+                {/* Информация о погоде и прочем */}
+                {city.localInfo && (
+                  <div className="mt-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-neutral-500 dark:text-neutral-400">Погода:</div>
+                      <div className="font-medium">{city.localInfo.weather}</div>
+                      <div className="text-neutral-500 dark:text-neutral-400">Язык:</div>
+                      <div className="font-medium">{city.localInfo.language}</div>
+                      <div className="text-neutral-500 dark:text-neutral-400">Валюта:</div>
+                      <div className="font-medium">{city.localInfo.currency}</div>
+                      <div className="text-neutral-500 dark:text-neutral-400">Лучший сезон:</div>
+                      <div className="font-medium">{city.localInfo.bestSeason}</div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
