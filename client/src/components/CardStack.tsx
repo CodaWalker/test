@@ -14,9 +14,7 @@ const CardStack = () => {
     loadRoutes, 
     loadPoisForCity,
     addToFavorites,
-    toggleMapView,
-    togglePOIsOnMap,
-    showPOIsOnMap
+    toggleMapView
   } = useStore();
   
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -72,9 +70,9 @@ const CardStack = () => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center p-4 max-w-md">
-          <h3 className="text-xl font-semibold mb-2 dark:text-white">No more cities to explore</h3>
+          <h3 className="text-xl font-semibold mb-2 dark:text-white">Нет городов для просмотра</h3>
           <p className="text-neutral-600 dark:text-neutral-300">
-            Try adjusting your filters or preferences to discover more destinations.
+            Попробуйте изменить фильтры или настройки предпочтений, чтобы увидеть больше направлений.
           </p>
         </div>
       </div>
@@ -82,30 +80,32 @@ const CardStack = () => {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-2 relative">
-      <AnimatePresence>
-        {filteredCities.map((city, index) => {
-          // Only render the current card and the next card
-          if (index < currentIndex || index > currentIndex + 1) return null;
-          
-          const isActive = index === currentIndex;
-          const cityRoutes = getRoutesForCity(city.id);
-          const cityPois = getPoisForCity(city.id);
-          
-          return (
-            <CityCard
-              key={city.id}
-              city={city}
-              pois={cityPois}
-              routes={cityRoutes}
-              isActive={isActive}
-              onSwipe={handleSwipe}
-              onFavorite={addToFavorites}
-              onToggleMapView={toggleMapView}
-            />
-          );
-        })}
-      </AnimatePresence>
+    <div className="flex-1 flex items-center justify-center px-4 py-2">
+      <div className="relative w-full max-w-md mx-auto flex justify-center items-center">
+        <AnimatePresence>
+          {filteredCities.map((city, index) => {
+            // Only render the current card and the next card
+            if (index < currentIndex || index > currentIndex + 1) return null;
+            
+            const isActive = index === currentIndex;
+            const cityRoutes = getRoutesForCity(city.id);
+            const cityPois = getPoisForCity(city.id);
+            
+            return (
+              <CityCard
+                key={city.id}
+                city={city}
+                pois={cityPois}
+                routes={cityRoutes}
+                isActive={isActive}
+                onSwipe={handleSwipe}
+                onFavorite={addToFavorites}
+                onToggleMapView={toggleMapView}
+              />
+            );
+          })}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

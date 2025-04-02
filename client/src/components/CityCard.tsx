@@ -113,7 +113,7 @@ const CityCard = ({
 
   return (
     <motion.div
-      className={`w-full max-w-md h-[500px] absolute ${isActive ? "z-10" : "z-0"}`}
+      className={`w-full max-w-md h-[500px] ${isActive ? "z-10" : "z-0"}`}
       style={{ 
         x, 
         rotate,
