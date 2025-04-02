@@ -17,8 +17,8 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const [showMap, setShowMap] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Предполагаем, что у города есть массив дополнительных фотографий
-  const images = [city.mainImage]; // Начинаем с главного изображения
+  // Используем доступный массив дополнительных фотографий из городов
+  const images = [city.mainImage, ...(city.additionalImages || [])];
   
   const handleLike = () => {
     vibrate(50);
@@ -67,11 +67,52 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
         {/* Image/Map Section */}
         <div className="relative w-full h-64">
           {!showMap ? (
-            <img
-              src={images[currentImageIndex]}
-              alt={city.name}
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full">
+              <img
+                src={images[currentImageIndex]}
+                alt={city.name}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Image navigation controls */}
+              {images.length > 1 && (
+                <>
+                  <button 
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-neutral-800/70 w-8 h-8 rounded-full flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      prevImage();
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                  </button>
+                  
+                  <button 
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-neutral-800/70 w-8 h-8 rounded-full flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      nextImage();
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                  
+                  {/* Image dots indicator */}
+                  <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                    {images.map((_, index) => (
+                      <div 
+                        key={index} 
+                        className={`w-2 h-2 rounded-full ${currentImageIndex === index ? 'bg-white' : 'bg-white/50'}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
               <p className="text-sm dark:text-white">Здесь будет карта с POI</p>
