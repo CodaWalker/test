@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { City, Poi } from "@shared/schema";
-import { Heart, X, Map, Image, MapPin, Info } from "lucide-react";
+import { Heart, X, Map, Image, MapPin, Info, ZoomIn, ZoomOut, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVibrate } from "@/hooks/useVibrate";
@@ -20,6 +20,8 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [cityPois, setCityPois] = useState<Poi[]>([]);
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [mapZoom, setMapZoom] = useState(1);
+  const [mapStyle, setMapStyle] = useState<"default" | "satellite" | "terrain">("default");
   
   // Используем доступный массив дополнительных фотографий из городов
   const images = [city.mainImage, ...(city.additionalImages || [])];
@@ -186,32 +188,77 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
                   
                   {/* POI маркеры, размещенные псевдослучайно вокруг центра */}
                   {cityPois.map((poi, index) => {
-                    // Размещаем POI в случайных позициях вокруг центра
+                    // Для обеспечения стабильности позиций при перерисовке используем фиксированное значение для каждого POI
+                    // Используем ID как seed для генерации псевдослучайной, но стабильной позиции
+                    const poiId = poi.id;
+                    const seed = poiId * 10000 + index;
+                    const pseudoRandom = Math.sin(seed) * 0.5 + 0.5; // Значение от 0 до 1
+                    
+                    // Распределяем POI по кругу с использованием "детерминированного" случайного смещения
                     const angle = (index / cityPois.length) * Math.PI * 2;
-                    const distance = 20 + Math.random() * 15; // От 20 до 35% от размера
-                    const left = 50 + Math.cos(angle) * distance;
-                    const top = 50 + Math.sin(angle) * distance;
+                    const baseDistance = 20; // Базовое расстояние от центра
+                    const randomOffset = pseudoRandom * 15; // Случайное смещение
+                    const distance = baseDistance + randomOffset;
+                    
+                    // Рассчитываем позицию с учетом масштаба карты
+                    const scaleFactor = 1 / mapZoom; // Обратная зависимость для эффекта масштабирования
+                    const left = 50 + Math.cos(angle) * distance * scaleFactor;
+                    const top = 50 + Math.sin(angle) * distance * scaleFactor;
+                    
+                    const tagMatches = poi.tags.some(tag => city.tags.includes(tag));
                     
                     return (
-                      <div
+                      <motion.div
                         key={poi.id}
-                        className={`absolute w-8 h-8 -ml-4 -mt-4 cursor-pointer transition-transform ${selectedPoi?.id === poi.id ? 'scale-125' : 'hover:scale-110'}`}
-                        style={{ left: `${left}%`, top: `${top}%` }}
+                        className={`absolute w-8 h-8 -ml-4 -mt-4 cursor-pointer transition-all duration-300 ${selectedPoi?.id === poi.id ? 'scale-125 z-40' : 'hover:scale-110 z-30'}`}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: selectedPoi?.id === poi.id ? 1.25 : 1,
+                          x: 0, y: 0,
+                          left: `${left}%`, 
+                          top: `${top}%` 
+                        }}
+                        transition={{ 
+                          type: "spring", 
+                          stiffness: 300, 
+                          damping: 20,
+                          delay: index * 0.05 // Последовательное появление точек
+                        }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => handlePoiClick(poi)}
                       >
                         <div className="w-full h-full flex items-center justify-center">
-                          <div className={`w-3 h-3 rounded-full ${selectedPoi?.id === poi.id ? 'bg-primary' : 'bg-primary/70'}`}></div>
+                          <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                            selectedPoi?.id === poi.id 
+                              ? 'bg-primary scale-110 shadow-glow' 
+                              : tagMatches 
+                                ? 'bg-primary/90' 
+                                : 'bg-primary/70'
+                          }`}></div>
                         </div>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap">
-                          <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md
-                            ${selectedPoi?.id === poi.id 
-                              ? 'bg-primary text-white scale-100' 
-                              : 'bg-white/90 dark:bg-neutral-800/90 scale-90'}
-                          `}>
-                            {poi.name}
-                          </div>
-                        </div>
-                      </div>
+                        
+                        {/* Название POI */}
+                        <AnimatePresence>
+                          {(selectedPoi?.id === poi.id || tagMatches) && (
+                            <motion.div 
+                              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap z-10"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                            >
+                              <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md
+                                ${selectedPoi?.id === poi.id 
+                                  ? 'bg-primary text-white' 
+                                  : 'bg-white/90 dark:bg-neutral-800/90'}
+                              `}>
+                                {poi.name}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
                     );
                   })}
                   
@@ -266,6 +313,24 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
             </div>
           )}
           
+          {/* Фон карты с различными стилями */}
+          {showMap && (
+            <div 
+              className="absolute inset-0 z-5"
+              style={{ 
+                backgroundImage: mapStyle === "default" 
+                  ? "url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')" 
+                  : mapStyle === "satellite" 
+                    ? "url('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')"
+                    : "url('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/static/0,0,1,0,0/600x400?access_token=pk.dummy')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                opacity: 0.7,
+                filter: `contrast(${mapZoom * 0.3 + 0.7}) brightness(${mapZoom * 0.2 + 0.8})`
+              }}
+            />
+          )}
+          
           {/* Градиент для фото. В режиме карты показываем только верхнюю часть */}
           <div className={`absolute top-0 left-0 w-full ${showMap ? 'h-20' : 'h-full'} bg-gradient-to-b from-black/50 to-transparent z-10`}></div>
           
@@ -276,18 +341,85 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
               <p className="text-white text-sm opacity-90 drop-shadow-md">{city.country}</p>
             </div>
             
-            <div className="flex flex-wrap gap-1 mt-2 pr-16">
-              {city.tags.slice(0, 3).map((tag, index) => (
-                <Badge 
-                  key={index} 
-                  variant="outline"
-                  className="bg-primary text-white border-0"
+            {/* Теги с анимированным переходом в зависимости от режима просмотра */}
+            <AnimatePresence mode="wait">
+              {!showMap ? (
+                <motion.div 
+                  key="tags-regular"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex flex-wrap gap-1 mt-2 pr-16"
                 >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+                  {city.tags.slice(0, 3).map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline"
+                      className="bg-primary text-white border-0"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="tags-map"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="absolute right-4 top-4 flex flex-wrap gap-1 justify-end"
+                  style={{ left: "auto", width: "auto" }}
+                >
+                  {city.tags.slice(0, 3).map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline"
+                      className="bg-primary/80 backdrop-blur-sm text-white border-0 shadow-md"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+          
+          {/* Элементы управления картой (показываются только в режиме карты) */}
+          {showMap && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+              <Button
+                size="icon"
+                variant="secondary"
+                className="w-9 h-9 rounded-full shadow-md bg-white/90 dark:bg-neutral-700/90 hover:scale-105 transition-transform"
+                onClick={() => setMapZoom(Math.min(mapZoom + 0.2, 2))}
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="w-9 h-9 rounded-full shadow-md bg-white/90 dark:bg-neutral-700/90 hover:scale-105 transition-transform"
+                onClick={() => setMapZoom(Math.max(mapZoom - 0.2, 0.6))}
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="w-9 h-9 rounded-full shadow-md bg-white/90 dark:bg-neutral-700/90 hover:scale-105 transition-transform"
+                onClick={() => {
+                  setMapStyle(prev => {
+                    if (prev === "default") return "satellite";
+                    if (prev === "satellite") return "terrain";
+                    return "default";
+                  });
+                }}
+              >
+                <Layers className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           
           {/* Toggle Map/Images button - перемещен вниз справа и повышен z-index */}
           <div className="absolute bottom-4 right-4" style={{ zIndex: 50 }}>

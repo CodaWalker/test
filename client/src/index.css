@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Дополнительные стили */
+.shadow-glow {
+  box-shadow: 0 0 8px 2px rgba(0, 132, 255, 0.8);
+}
+
+/* Анимации для карты */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
 @layer base {
   * {
     @apply border-border;
