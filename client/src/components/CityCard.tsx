@@ -133,7 +133,7 @@ const CityCard = ({
       <div className="relative w-full h-full perspective">
         {/* Front of card */}
         <animated.div
-          className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-neutral-800"
+          className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-neutral-800 flex flex-col"
           style={{
             opacity: opacity.to(o => 1 - o),
             transform,
@@ -295,7 +295,7 @@ const CityCard = ({
           </div>
 
           {/* Routes Section */}
-          <div className="p-4">
+          <div className="p-4 flex-1 flex flex-col justify-center overflow-hidden">
             <div className="flex justify-between items-center mb-3 w-full">
               <h3 className="font-semibold text-lg dark:text-white">Предлагаемые маршруты</h3>
               <Button
@@ -309,11 +309,11 @@ const CityCard = ({
             </div>
             
             {/* Routes List */}
-            <div className="space-y-2 max-h-[180px] overflow-y-auto">
+            <div className="space-y-2 flex-1 overflow-y-auto min-h-[150px]">
               {routes.map((route) => (
                 <div 
                   key={route.id}
-                  className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-3 transition hover:bg-neutral-200 dark:hover:bg-neutral-600 cursor-pointer relative"
+                  className="bg-neutral-100 dark:bg-neutral-700 rounded-lg p-3 transition hover:bg-neutral-200 dark:hover:bg-neutral-600 cursor-pointer relative shadow-sm border border-neutral-200 dark:border-neutral-600"
                   onMouseEnter={() => setHoveringRoute(route.id)}
                   onMouseLeave={() => setHoveringRoute(null)}
                 >
