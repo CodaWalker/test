@@ -84,10 +84,9 @@ const CardStack = () => {
       <div className="relative w-full max-w-md mx-auto flex justify-center items-center">
         <AnimatePresence>
           {filteredCities.map((city, index) => {
-            // Only render the current card and the next card
-            if (index < currentIndex || index > currentIndex + 1) return null;
+            // Only render the current card
+            if (index !== currentIndex) return null;
             
-            const isActive = index === currentIndex;
             const cityRoutes = getRoutesForCity(city.id);
             const cityPois = getPoisForCity(city.id);
             
@@ -97,7 +96,7 @@ const CardStack = () => {
                 city={city}
                 pois={cityPois}
                 routes={cityRoutes}
-                isActive={isActive}
+                isActive={true}
                 onSwipe={handleSwipe}
                 onFavorite={addToFavorites}
                 onToggleMapView={toggleMapView}
