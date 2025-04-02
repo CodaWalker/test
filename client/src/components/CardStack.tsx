@@ -1,71 +1,45 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
-import CityCard from "./CityCard";
 import { AnimatePresence } from "framer-motion";
+import CityCard from "./CityCard";
 
 const CardStack = () => {
   const { 
     filteredCities, 
-    routes, 
-    pois,
-    likeCity, 
-    dislikeCity, 
     loadCities, 
-    loadRoutes, 
-    loadPoisForCity,
-    addToFavorites,
-    toggleMapView
+    loadRoutes,
+    likeCity,
+    dislikeCity
   } = useStore();
-  
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loadedPois, setLoadedPois] = useState<Record<number, boolean>>({});
+  
+  // Храним направление свайпа для анимации
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
 
   useEffect(() => {
     loadCities();
     loadRoutes();
   }, [loadCities, loadRoutes]);
-
-  useEffect(() => {
-    if (filteredCities.length > 0 && !loadedPois[filteredCities[currentIndex]?.id]) {
-      const cityId = filteredCities[currentIndex]?.id;
-      if (cityId) {
-        loadPoisForCity(cityId);
-        setLoadedPois(prev => ({ ...prev, [cityId]: true }));
-      }
-    }
-  }, [currentIndex, filteredCities, loadedPois, loadPoisForCity]);
-
+  
+  // Обработчик свайпа - первый этап функционала
   const handleSwipe = (direction: "left" | "right") => {
-    const currentCity = filteredCities[currentIndex];
+    setSwipeDirection(direction);
     
-    if (direction === "right") {
-      likeCity(currentCity.id);
-    } else {
-      dislikeCity(currentCity.id);
-    }
-    
-    // Load the next city's POIs in advance
-    if (currentIndex + 1 < filteredCities.length) {
-      const nextCityId = filteredCities[currentIndex + 1].id;
-      if (!loadedPois[nextCityId]) {
-        loadPoisForCity(nextCityId);
-        setLoadedPois(prev => ({ ...prev, [nextCityId]: true }));
+    // Имитируем задержку для анимации
+    setTimeout(() => {
+      const currentCity = filteredCities[currentIndex];
+      
+      if (direction === "right") {
+        likeCity(currentCity.id);
+      } else {
+        dislikeCity(currentCity.id);
       }
-    }
-    
-    setCurrentIndex(prevIndex => prevIndex + 1);
+      
+      setCurrentIndex(prevIndex => prevIndex + 1);
+    }, 300); // Задержка соответствует длительности анимации выхода
   };
 
-  // Get city-specific routes
-  const getRoutesForCity = (cityId: number) => {
-    return routes.filter(route => route.cities.includes(cityId));
-  };
-
-  // Get POIs for current city
-  const getPoisForCity = (cityId: number) => {
-    return pois.filter(poi => poi.cityId === cityId);
-  };
-
+  // Простое отображение пустого состояния
   if (filteredCities.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -80,22 +54,26 @@ const CardStack = () => {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-2">
-      <div className="relative w-full max-w-md mx-auto flex justify-center items-center">
-        <AnimatePresence mode="popLayout">
+    <div className="flex-1 flex items-center justify-center px-4 py-2 min-h-[80vh]">
+      <div className="relative w-full max-w-md h-[500px] flex justify-center items-center">
+        <AnimatePresence mode="wait">
           {currentIndex < filteredCities.length && (
-            <CityCard
+            <CityCard 
               key={filteredCities[currentIndex].id}
-              city={filteredCities[currentIndex]}
-              pois={getPoisForCity(filteredCities[currentIndex].id)}
-              routes={getRoutesForCity(filteredCities[currentIndex].id)}
-              isActive={true}
+              city={filteredCities[currentIndex]} 
               onSwipe={handleSwipe}
-              onFavorite={addToFavorites}
-              onToggleMapView={toggleMapView}
             />
           )}
         </AnimatePresence>
+        
+        {currentIndex >= filteredCities.length && (
+          <div className="text-center p-4">
+            <h3 className="text-xl font-semibold mb-2 dark:text-white">Все города просмотрены</h3>
+            <p className="text-neutral-600 dark:text-neutral-300">
+              Скоро здесь появятся новые направления для вас.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
