@@ -14,7 +14,9 @@ const CardStack = () => {
     loadRoutes, 
     loadPoisForCity,
     addToFavorites,
-    toggleMapView
+    toggleMapView,
+    togglePOIsOnMap,
+    showPOIsOnMap
   } = useStore();
   
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -56,7 +56,7 @@ const RoutesList = ({
   if (routes.length === 0) {
     return (
       <div className="p-4 text-center text-neutral-500 dark:text-neutral-400">
-        <p>No routes available</p>
+        <p>Маршруты не найдены</p>
       </div>
     );
   }
@@ -66,14 +66,14 @@ const RoutesList = ({
       {showMapButton && (
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-semibold text-lg dark:text-white">
-            {currentCityId ? "Suggested Routes" : "Available Routes"}
+            {currentCityId ? "Рекомендуемые маршруты" : "Доступные маршруты"}
           </h3>
           <Button
             variant="link"
             className="text-xs flex items-center gap-1 text-primary font-medium p-0 h-auto"
             onClick={onToggleMapView}
           >
-            Map View
+            Карта
             <Map className="ml-1 h-3 w-3" />
           </Button>
         </div>
@@ -104,7 +104,7 @@ const RoutesList = ({
                     variant="outline" 
                     className="mt-2 bg-primary/10 text-primary border-primary/20 text-xs"
                   >
-                    Includes current city
+                    Включает текущий город
                   </Badge>
                 )}
               </div>

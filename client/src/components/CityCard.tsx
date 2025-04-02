@@ -250,7 +250,18 @@ const CityCard = ({
             </div>
 
             {/* POI Gallery */}
-            <h3 className="font-semibold text-lg dark:text-white mb-2">Popular Attractions</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-semibold text-lg dark:text-white">Популярные места</h3>
+              <Button
+                variant="outline"
+                className="text-xs flex items-center gap-1 text-primary font-medium"
+                onClick={onToggleMapView}
+                size="sm"
+              >
+                Посмотреть на карте
+                <MapPin className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
             <div className="grid grid-cols-2 gap-2 mb-4">
               {pois.map(poi => (
                 <div key={poi.id} className="relative rounded-lg overflow-hidden shadow-md">

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import CardStack from "@/components/CardStack";
 import MapView from "@/components/MapView";
@@ -11,19 +11,38 @@ const Explore = () => {
     isFilterOpen, 
     cities,
     routes,
+    pois,
     currentFilters,
     updateFilters,
     loadCities,
     loadRoutes,
+    loadPoisForCity,
     toggleMapView,
     toggleFilter,
-    addToFavorites
+    addToFavorites,
+    showPOIsOnMap,
+    togglePOIsOnMap
   } = useStore();
+  
+  const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
   
   useEffect(() => {
     loadCities();
     loadRoutes();
   }, [loadCities, loadRoutes]);
+  
+  // Загружаем POI для выбранного города
+  useEffect(() => {
+    if (selectedCityId) {
+      loadPoisForCity(selectedCityId);
+    }
+  }, [selectedCityId, loadPoisForCity]);
+  
+  // Обработчик для выбора города и загрузки его POI
+  const handleSelectCity = (cityId: number) => {
+    setSelectedCityId(cityId);
+    loadPoisForCity(cityId);
+  };
   
   const handleFilterReset = () => {
     updateFilters({
@@ -44,9 +63,12 @@ const Explore = () => {
         isOpen={isMapViewOpen}
         cities={cities}
         routes={routes}
+        pois={pois}
         onClose={toggleMapView}
         onSelectRoute={addToFavorites}
-        onSelectCity={() => {}}
+        onSelectCity={handleSelectCity}
+        showPOIs={showPOIsOnMap}
+        onTogglePOIs={togglePOIsOnMap}
       />
       
       <FilterModal 

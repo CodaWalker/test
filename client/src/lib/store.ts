@@ -41,6 +41,7 @@ interface AppState {
   isMenuOpen: boolean;
   isFilterOpen: boolean;
   isMapViewOpen: boolean;
+  showPOIsOnMap: boolean;
   
   // App Data
   currentTab: string;
@@ -59,6 +60,7 @@ interface AppState {
   toggleMenu: () => void;
   toggleFilter: () => void;
   toggleMapView: () => void;
+  togglePOIsOnMap: () => void;
   setCurrentTab: (tab: string) => void;
   
   // Data Actions
@@ -79,6 +81,7 @@ export const useStore = create<AppState>((set, get) => ({
   isMenuOpen: false,
   isFilterOpen: false,
   isMapViewOpen: false,
+  showPOIsOnMap: false,
   
   // App Data
   currentTab: "explore",
@@ -122,6 +125,7 @@ export const useStore = create<AppState>((set, get) => ({
   toggleMenu: () => set(state => ({ isMenuOpen: !state.isMenuOpen })),
   toggleFilter: () => set(state => ({ isFilterOpen: !state.isFilterOpen })),
   toggleMapView: () => set(state => ({ isMapViewOpen: !state.isMapViewOpen })),
+  togglePOIsOnMap: () => set(state => ({ showPOIsOnMap: !state.showPOIsOnMap })),
   setCurrentTab: (tab) => set({ currentTab: tab }),
   
   // Data Actions

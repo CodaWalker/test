@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMapGL, { Marker, Source, Layer, Popup } from "react-map-gl";
-import { X, MapPin, Info, Heart } from "lucide-react";
+import { X, MapPin, Info, Heart, Map, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { City, Route, Poi } from "@shared/schema";
@@ -17,6 +17,7 @@ interface MapViewProps {
   onSelectRoute: (routeId: number) => void;
   onSelectCity: (cityId: number) => void;
   showPOIs?: boolean;
+  onTogglePOIs?: () => void;
 }
 
 const MapView = ({ 
@@ -27,7 +28,8 @@ const MapView = ({
   onClose, 
   onSelectRoute, 
   onSelectCity, 
-  showPOIs = false 
+  showPOIs = false,
+  onTogglePOIs
 }: MapViewProps) => {
   const [viewport, setViewport] = useState({
     latitude: 41.3851,
@@ -64,15 +66,39 @@ const MapView = ({
         >
           <div className="h-full flex flex-col">
             <div className="flex justify-between items-center p-4 border-b dark:border-neutral-700">
-              <h3 className="font-semibold text-lg dark:text-white">Route Map</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              >
-                <X className="h-5 w-5 text-neutral-700 dark:text-neutral-200" />
-              </Button>
+              <h3 className="font-semibold text-lg dark:text-white">
+                {showPOIs ? "Достопримечательности" : "Маршруты путешествий"}
+              </h3>
+              <div className="flex items-center gap-2">
+                {onTogglePOIs && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onTogglePOIs}
+                    className="flex items-center gap-1"
+                  >
+                    {showPOIs ? (
+                      <>
+                        <Map className="h-4 w-4" />
+                        <span className="text-xs">Маршруты</span>
+                      </>
+                    ) : (
+                      <>
+                        <Landmark className="h-4 w-4" />
+                        <span className="text-xs">Места</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                >
+                  <X className="h-5 w-5 text-neutral-700 dark:text-neutral-200" />
+                </Button>
+              </div>
             </div>
             
             <div className="relative flex-1 bg-neutral-100 dark:bg-neutral-900">
@@ -171,7 +197,7 @@ const MapView = ({
                         {cities.find(c => c.id === selectedCity)?.country}
                       </h4>
                       <p className="text-neutral-500 text-xs mb-1">
-                        Featured in {routes.filter(r => r.cities.includes(selectedCity)).length} routes
+                        В {routes.filter(r => r.cities.includes(selectedCity)).length} маршрутах
                       </p>
                       <Button
                         className="w-full bg-primary text-white rounded py-1 text-xs font-medium mt-1"
@@ -181,7 +207,7 @@ const MapView = ({
                           onClose();
                         }}
                       >
-                        View Details
+                        Подробнее
                       </Button>
                     </div>
                   </Popup>
@@ -220,8 +246,87 @@ const MapView = ({
                         variant="outline"
                         onClick={() => onSelectRoute(selectedRoute)}
                       >
-                        Add to Favorites
+                        Добавить в избранное
                       </Button>
+                    </div>
+                  </Popup>
+                )}
+                
+                {/* POI Markers */}
+                {showPOIs && pois.map(poi => {
+                  // Получаем координаты города для POI, так как у POI нет собственных координат
+                  const poiCity = cities.find(city => city.id === poi.cityId);
+                  if (!poiCity) return null;
+                  
+                  // Рассчитываем координаты с небольшим смещением от города
+                  // Это просто имитация, в реальности у POI должны быть свои координаты
+                  const offset = (poi.id % 5) * 0.002;
+                  const lat = poiCity.coordinates.lat + offset;
+                  const lng = poiCity.coordinates.lng + offset;
+                  
+                  return (
+                    <Marker
+                      key={`poi-${poi.id}`}
+                      latitude={lat}
+                      longitude={lng}
+                      offsetLeft={-15}
+                      offsetTop={-30}
+                    >
+                      <div
+                        className="relative cursor-pointer"
+                        onClick={() => setSelectedPoi(poi.id)}
+                      >
+                        <MapPin 
+                          className="text-primary" 
+                          size={20} 
+                          fill={selectedPoi === poi.id ? "rgba(var(--primary-rgb), 0.5)" : "transparent"}
+                        />
+                      </div>
+                    </Marker>
+                  );
+                })}
+                
+                {/* POI Popup */}
+                {selectedPoi && (
+                  <Popup
+                    latitude={(cities.find(city => city.id === pois.find(p => p.id === selectedPoi)?.cityId)?.coordinates.lat || 0) + 
+                      ((selectedPoi % 5) * 0.002)}
+                    longitude={(cities.find(city => city.id === pois.find(p => p.id === selectedPoi)?.cityId)?.coordinates.lng || 0) + 
+                      ((selectedPoi % 5) * 0.002)}
+                    closeButton={true}
+                    closeOnClick={false}
+                    onClose={() => setSelectedPoi(null)}
+                    anchor="bottom"
+                  >
+                    <div className="p-2 w-52">
+                      {pois.find(p => p.id === selectedPoi) && (
+                        <>
+                          <div className="mb-2">
+                            <img 
+                              src={pois.find(p => p.id === selectedPoi)?.image} 
+                              alt={pois.find(p => p.id === selectedPoi)?.name} 
+                              className="w-full h-24 object-cover rounded-md"
+                            />
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">
+                            {pois.find(p => p.id === selectedPoi)?.name}
+                          </h4>
+                          <p className="text-neutral-500 text-xs mb-2">
+                            {pois.find(p => p.id === selectedPoi)?.description || "Нет описания"}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pois.find(p => p.id === selectedPoi)?.tags.slice(0, 3).map((tag, index) => (
+                              <Badge 
+                                key={index} 
+                                variant="outline"
+                                className="bg-primary/10 text-primary text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </Popup>
                 )}
