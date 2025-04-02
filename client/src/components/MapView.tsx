@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMapGL, { Marker, Source, Layer, Popup } from "react-map-gl";
+// import ReactMapGL, { Marker, Source, Layer, Popup } from "react-map-gl";
 import { X, MapPin, Info, Heart, Map, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,236 +101,69 @@ const MapView = ({
               </div>
             </div>
             
-            <div className="relative flex-1 bg-neutral-100 dark:bg-neutral-900">
-              <ReactMapGL
-                {...viewport}
-                width="100%"
-                height="100%"
-                mapStyle="mapbox://styles/mapbox/light-v10"
-                onViewportChange={setViewport}
-                mapboxApiAccessToken={process.env.MAPBOX_TOKEN || "pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2t6Ymx1bjl4MDZxYzJ1bzJ3MjFvNDYwNyJ9.W6pWbRzOz-2RxYEFAKT99g"}
-              >
-                {/* Draw routes */}
-                {routes.map(route => {
-                  const routeCities = cities.filter(city => route.cities.includes(city.id));
-                  const routeCoordinates = routeCities.map(city => [city.coordinates.lng, city.coordinates.lat]);
-                  
-                  if (routeCoordinates.length < 2) return null;
-                  
-                  const geojson = {
-                    type: 'Feature',
-                    properties: {},
-                    geometry: {
-                      type: 'LineString',
-                      coordinates: routeCoordinates
-                    }
-                  };
-                  
-                  const isHighlighted = hoveredRoute === route.id || selectedRoute === route.id;
-                  
-                  return (
-                    <Source
-                      key={route.id}
-                      id={`route-${route.id}`}
-                      type="geojson"
-                      data={geojson as any}
-                    >
-                      <Layer
-                        id={`route-layer-${route.id}`}
-                        type="line"
-                        paint={{
-                          'line-color': route.color,
-                          'line-width': isHighlighted ? 4 : 2,
-                          'line-opacity': isHighlighted ? 1 : 0.6
-                        }}
-                        onClick={() => {
-                          setSelectedRoute(route.id);
-                          onSelectRoute(route.id);
-                        }}
-                        onMouseEnter={() => setHoveredRoute(route.id)}
-                        onMouseLeave={() => setHoveredRoute(null)}
-                      />
-                    </Source>
-                  );
-                })}
-                
-                {/* Draw city markers */}
-                {cities.map(city => (
-                  <Marker
-                    key={city.id}
-                    latitude={city.coordinates.lat}
-                    longitude={city.coordinates.lng}
-                    offsetLeft={-15}
-                    offsetTop={-30}
-                  >
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => {
-                        setSelectedCity(city.id);
-                        onSelectCity(city.id);
-                      }}
-                    >
-                      <div 
-                        className={`w-3 h-3 rounded-full ${selectedCity === city.id ? 'animate-pulse' : ''}`}
-                        style={{ backgroundColor: getCityColor(city.id, routes) }}
-                      />
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white dark:bg-neutral-700 px-2 py-1 rounded text-xs font-medium shadow-md whitespace-nowrap">
-                        {city.name}
-                      </div>
-                    </div>
-                  </Marker>
-                ))}
-                
-                {/* City Popup */}
-                {selectedCity && (
-                  <Popup
-                    latitude={cities.find(c => c.id === selectedCity)!.coordinates.lat}
-                    longitude={cities.find(c => c.id === selectedCity)!.coordinates.lng}
-                    closeButton={true}
-                    closeOnClick={false}
-                    onClose={() => setSelectedCity(null)}
-                    anchor="bottom"
-                  >
-                    <div className="p-2 w-48">
-                      <h4 className="font-medium text-sm mb-1">
-                        {cities.find(c => c.id === selectedCity)?.name}, 
-                        {cities.find(c => c.id === selectedCity)?.country}
-                      </h4>
-                      <p className="text-neutral-500 text-xs mb-1">
-                        В {routes.filter(r => r.cities.includes(selectedCity)).length} маршрутах
-                      </p>
-                      <Button
-                        className="w-full bg-primary text-white rounded py-1 text-xs font-medium mt-1"
-                        size="sm"
-                        onClick={() => {
-                          onSelectCity(selectedCity);
-                          onClose();
-                        }}
-                      >
-                        Подробнее
-                      </Button>
-                    </div>
-                  </Popup>
-                )}
-                
-                {/* Route Popup */}
-                {selectedRoute && (
-                  <Popup
-                    latitude={getCenterOfRoute(selectedRoute, routes, cities).lat}
-                    longitude={getCenterOfRoute(selectedRoute, routes, cities).lng}
-                    closeButton={true}
-                    closeOnClick={false}
-                    onClose={() => setSelectedRoute(null)}
-                    anchor="bottom"
-                  >
-                    <div className="p-2 w-48">
-                      <h4 className="font-medium text-sm mb-1">
-                        {routes.find(r => r.id === selectedRoute)?.name}
-                      </h4>
-                      <p className="text-neutral-500 text-xs mb-1">
-                        {cities
-                          .filter(city => routes.find(r => r.id === selectedRoute)?.cities.includes(city.id))
-                          .map(city => city.name)
-                          .join(" → ")}
-                      </p>
-                      <p className="text-neutral-500 text-xs">
-                        {format(new Date(routes.find(r => r.id === selectedRoute)!.startDate), "MMM d")} - 
-                        {format(new Date(routes.find(r => r.id === selectedRoute)!.endDate), "MMM d")}
-                      </p>
-                      <p className="text-neutral-500 text-xs font-medium">
-                        ${routes.find(r => r.id === selectedRoute)?.price}
-                      </p>
-                      <Button
-                        className="w-full mt-2"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onSelectRoute(selectedRoute)}
-                      >
-                        Добавить в избранное
-                      </Button>
-                    </div>
-                  </Popup>
-                )}
-                
-                {/* POI Markers */}
-                {showPOIs && pois.map(poi => {
-                  // Получаем координаты города для POI, так как у POI нет собственных координат
-                  const poiCity = cities.find(city => city.id === poi.cityId);
-                  if (!poiCity) return null;
-                  
-                  // Рассчитываем координаты с небольшим смещением от города
-                  // Это просто имитация, в реальности у POI должны быть свои координаты
-                  const offset = (poi.id % 5) * 0.002;
-                  const lat = poiCity.coordinates.lat + offset;
-                  const lng = poiCity.coordinates.lng + offset;
-                  
-                  return (
-                    <Marker
-                      key={`poi-${poi.id}`}
-                      latitude={lat}
-                      longitude={lng}
-                      offsetLeft={-15}
-                      offsetTop={-30}
-                    >
-                      <div
-                        className="relative cursor-pointer"
-                        onClick={() => setSelectedPoi(poi.id)}
-                      >
-                        <MapPin 
-                          className="text-primary" 
-                          size={20} 
-                          fill={selectedPoi === poi.id ? "rgba(var(--primary-rgb), 0.5)" : "transparent"}
-                        />
-                      </div>
-                    </Marker>
-                  );
-                })}
-                
-                {/* POI Popup */}
-                {selectedPoi && (
-                  <Popup
-                    latitude={(cities.find(city => city.id === pois.find(p => p.id === selectedPoi)?.cityId)?.coordinates.lat || 0) + 
-                      ((selectedPoi % 5) * 0.002)}
-                    longitude={(cities.find(city => city.id === pois.find(p => p.id === selectedPoi)?.cityId)?.coordinates.lng || 0) + 
-                      ((selectedPoi % 5) * 0.002)}
-                    closeButton={true}
-                    closeOnClick={false}
-                    onClose={() => setSelectedPoi(null)}
-                    anchor="bottom"
-                  >
-                    <div className="p-2 w-52">
-                      {pois.find(p => p.id === selectedPoi) && (
-                        <>
-                          <div className="mb-2">
-                            <img 
-                              src={pois.find(p => p.id === selectedPoi)?.image} 
-                              alt={pois.find(p => p.id === selectedPoi)?.name} 
-                              className="w-full h-24 object-cover rounded-md"
-                            />
+            <div className="relative flex-1 bg-neutral-100 dark:bg-neutral-900 flex flex-col justify-center items-center">
+              <div className="text-center p-8 max-w-md">
+                <h3 className="text-xl font-semibold mb-4">Интерактивная карта временно недоступна</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Мы работаем над установкой необходимых компонентов для отображения карты.
+                </p>
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  {/* Список городов */}
+                  <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-md">
+                    <h4 className="font-medium mb-2">Города на маршруте</h4>
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {cities.slice(0, 5).map(city => (
+                        <li 
+                          key={city.id} 
+                          className="py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700 rounded px-2"
+                          onClick={() => onSelectCity(city.id)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getCityColor(city.id, routes) }}></div>
+                            <span>{city.name}</span>
                           </div>
-                          <h4 className="font-medium text-sm mb-1">
-                            {pois.find(p => p.id === selectedPoi)?.name}
-                          </h4>
-                          <p className="text-neutral-500 text-xs mb-2">
-                            {pois.find(p => p.id === selectedPoi)?.description || "Нет описания"}
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {pois.find(p => p.id === selectedPoi)?.tags.slice(0, 3).map((tag, index) => (
-                              <Badge 
-                                key={index} 
-                                variant="outline"
-                                className="bg-primary/10 text-primary text-xs"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </Popup>
-                )}
-              </ReactMapGL>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  {/* Список маршрутов или POI */}
+                  <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-md">
+                    <h4 className="font-medium mb-2">{showPOIs ? "Популярные места" : "Маршруты"}</h4>
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {showPOIs 
+                        ? pois.slice(0, 5).map(poi => (
+                            <li 
+                              key={poi.id} 
+                              className="py-2 flex items-center gap-2"
+                            >
+                              <MapPin className="text-primary" size={14} />
+                              <span className="text-sm">{poi.name}</span>
+                            </li>
+                          ))
+                        : routes.slice(0, 5).map(route => (
+                            <li 
+                              key={route.id} 
+                              className="py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700 rounded px-2"
+                              onClick={() => onSelectRoute(route.id)}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <div 
+                                  className="w-2 h-2 rounded-full" 
+                                  style={{ backgroundColor: route.color }}
+                                ></div>
+                                <span className="text-sm">{route.name}</span>
+                              </div>
+                            </li>
+                          ))
+                      }
+                    </ul>
+                  </div>
+                </div>
+                <Button onClick={onClose} variant="outline">
+                  Закрыть карту
+                </Button>
+              </div>
             </div>
           </div>
         </motion.div>

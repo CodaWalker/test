@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { City, Route } from "@shared/schema";
 import RoutesList from "@/components/RoutesList";
-import { MapView } from "@/components/MapView";
+import MapView from "@/components/MapView";
 import SideMenu from "@/components/SideMenu";
 import { AnimatePresence, motion } from "framer-motion";
 import { 

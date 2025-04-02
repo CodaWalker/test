@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { UserEdit, MapPin, Luggage, CreditCard, Languages, Calendar, Mail } from "lucide-react";
+import { UserCog, MapPin, Luggage, CreditCard, Languages, Calendar, Mail } from "lucide-react";
 import SideMenu from "@/components/SideMenu";
 
 const Profile = () => {
@@ -74,7 +74,7 @@ const Profile = () => {
                 className="h-8"
                 onClick={() => setIsEditing(true)}
               >
-                <UserEdit className="mr-2 h-4 w-4" />
+                <UserCog className="mr-2 h-4 w-4" />
                 Edit
               </Button>
             )}
@@ -111,7 +111,7 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                    <UserEdit className="h-8 w-8 text-primary" />
+                    <UserCog className="h-8 w-8 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-medium dark:text-white">{userProfile?.username}</h3>

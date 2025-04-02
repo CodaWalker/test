@@ -31,6 +31,13 @@ const CityCard = ({
   const [hoveringRoute, setHoveringRoute] = useState<number | null>(null);
   const [showPoiGallery, setShowPoiGallery] = useState(false);
   const [currentPoiIndex, setCurrentPoiIndex] = useState(0);
+  const [currentCityImageIndex, setCurrentCityImageIndex] = useState(0);
+  
+  // Предположим, что у города может быть несколько изображений
+  const cityImages = [
+    city.mainImage,
+    ...(city.additionalImages || [])
+  ];
   
   const vibrate = useVibrate();
   
@@ -89,6 +96,20 @@ const CityCard = ({
       vibrate(30);
     }
   };
+  
+  const nextCityImage = () => {
+    if (cityImages.length > 0) {
+      setCurrentCityImageIndex((prevIndex) => (prevIndex + 1) % cityImages.length);
+      vibrate(30);
+    }
+  };
+  
+  const prevCityImage = () => {
+    if (cityImages.length > 0) {
+      setCurrentCityImageIndex((prevIndex) => (prevIndex - 1 + cityImages.length) % cityImages.length);
+      vibrate(30);
+    }
+  };
 
   return (
     <motion.div
@@ -122,11 +143,95 @@ const CityCard = ({
         >
           {/* City Image Section */}
           <div className="relative w-full h-64">
-            <img
-              src={city.mainImage}
-              alt={`${city.name} skyline`}
-              className="w-full h-full object-cover"
-            />
+            {showPoiGallery ? (
+              <div className="w-full h-full relative">
+                <img
+                  src={pois[currentPoiIndex]?.image || city.mainImage}
+                  alt={pois[currentPoiIndex]?.name || `${city.name} skyline`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/50 to-transparent"></div>
+                
+                {/* POI Navigation Controls */}
+                <div className="absolute top-1/2 left-0 right-0 flex justify-between px-2 -translate-y-1/2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full"
+                    onClick={prevPoi}
+                    disabled={pois.length <= 1}
+                  >
+                    <ChevronLeft size={18} />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full"
+                    onClick={nextPoi}
+                    disabled={pois.length <= 1}
+                  >
+                    <ChevronRight size={18} />
+                  </Button>
+                </div>
+                
+                {/* POI Info */}
+                <div className="absolute bottom-16 left-4 right-4 bg-black/60 p-2 rounded-lg">
+                  <h3 className="text-white text-sm font-semibold">
+                    {pois[currentPoiIndex]?.name || 'Фотогалерея'}
+                  </h3>
+                  <p className="text-white/80 text-xs truncate">
+                    {pois[currentPoiIndex]?.description || 'Нет описания'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full relative">
+                <img
+                  src={cityImages[currentCityImageIndex] || city.mainImage}
+                  alt={`${city.name} фото ${currentCityImageIndex + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Показываем навигацию только если есть несколько изображений города */}
+                {cityImages.length > 1 && (
+                  <div className="absolute top-1/2 left-0 right-0 flex justify-between px-2 -translate-y-1/2 opacity-0 hover:opacity-100 transition-opacity duration-300">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="bg-black/20 hover:bg-black/40 text-white w-8 h-8 rounded-full"
+                      onClick={prevCityImage}
+                    >
+                      <ChevronLeft size={18} />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="bg-black/20 hover:bg-black/40 text-white w-8 h-8 rounded-full"
+                      onClick={nextCityImage}
+                    >
+                      <ChevronRight size={18} />
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Индикатор текущего фото (точки) */}
+                {cityImages.length > 1 && (
+                  <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2">
+                    {cityImages.map((_, index) => (
+                      <div 
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all
+                          ${index === currentCityImageIndex 
+                            ? 'bg-white scale-110' 
+                            : 'bg-white/50 scale-100'}
+                        `}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/50 to-transparent"></div>
             <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
               <div>
@@ -164,26 +269,41 @@ const CityCard = ({
               </Button>
             </div>
             
-            {/* Flip button */}
-            <Button
-              className="absolute bottom-4 right-4 bg-white/90 dark:bg-neutral-700/90 w-10 h-10 rounded-full shadow-md hover:scale-105 p-0"
-              onClick={handleFlipCard}
-              size="icon"
-            >
-              <Info className="text-neutral-600 dark:text-white" size={20} />
-            </Button>
+            {/* Buttons for flipping card and toggling POI gallery */}
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                className="bg-white/90 dark:bg-neutral-700/90 w-10 h-10 rounded-full shadow-md hover:scale-105 p-0"
+                onClick={togglePoiGallery}
+                size="icon"
+                title={showPoiGallery ? "Показать город" : "Показать места"}
+              >
+                {showPoiGallery ? (
+                  <Image className="text-neutral-600 dark:text-white" size={18} />
+                ) : (
+                  <MapPin className="text-neutral-600 dark:text-white" size={18} />
+                )}
+              </Button>
+              <Button
+                className="bg-white/90 dark:bg-neutral-700/90 w-10 h-10 rounded-full shadow-md hover:scale-105 p-0"
+                onClick={handleFlipCard}
+                size="icon"
+                title="Подробнее о городе"
+              >
+                <Info className="text-neutral-600 dark:text-white" size={18} />
+              </Button>
+            </div>
           </div>
 
           {/* Routes Section */}
           <div className="p-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-lg dark:text-white">Suggested Routes</h3>
+              <h3 className="font-semibold text-lg dark:text-white">Предлагаемые маршруты</h3>
               <Button
                 variant="link"
                 className="text-xs flex items-center gap-1 text-primary font-medium p-0 h-auto"
                 onClick={onToggleMapView}
               >
-                Map View
+                Карта
                 <span className="ml-1">🗺️</span>
               </Button>
             </div>
@@ -299,7 +419,7 @@ const CityCard = ({
             </div>
 
             {/* Tags Section */}
-            <h3 className="font-semibold text-lg dark:text-white mb-2">Experience Tags</h3>
+            <h3 className="font-semibold text-lg dark:text-white mb-2">Категории отдыха</h3>
             <div className="flex flex-wrap gap-2 mb-4">
               {city.tags.map((tag, index) => (
                 <Badge 
