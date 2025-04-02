@@ -296,7 +296,7 @@ const CityCard = ({
 
           {/* Routes Section */}
           <div className="p-4">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-3 w-full">
               <h3 className="font-semibold text-lg dark:text-white">Предлагаемые маршруты</h3>
               <Button
                 variant="link"
@@ -374,8 +374,8 @@ const CityCard = ({
             backfaceVisibility: "hidden"
           }}
         >
-          <div className="relative p-4 overflow-y-auto h-full">
-            <div className="flex justify-between items-center mb-3">
+          <div className="relative p-4 overflow-y-auto h-full flex flex-col items-center">
+            <div className="flex justify-between items-center mb-3 w-full">
               <h2 className="font-bold text-xl dark:text-white">{city.name}</h2>
               <Button
                 className="bg-white dark:bg-neutral-700 w-10 h-10 rounded-full shadow-md hover:scale-105 p-0"
@@ -386,12 +386,12 @@ const CityCard = ({
               </Button>
             </div>
             
-            <div className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">
+            <div className="text-sm text-neutral-600 dark:text-neutral-300 mb-4 w-full">
               {city.description}
             </div>
 
             {/* POI Gallery */}
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-3 w-full">
               <h3 className="font-semibold text-lg dark:text-white">Популярные места</h3>
               <Button
                 variant="outline"
@@ -403,7 +403,7 @@ const CityCard = ({
                 <MapPin className="h-3 w-3 ml-1" />
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-4 w-full">
               {pois.map(poi => (
                 <div key={poi.id} className="relative rounded-lg overflow-hidden shadow-md">
                   <img
@@ -419,8 +419,8 @@ const CityCard = ({
             </div>
 
             {/* Tags Section */}
-            <h3 className="font-semibold text-lg dark:text-white mb-2">Категории отдыха</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
+            <h3 className="font-semibold text-lg dark:text-white mb-2 w-full">Категории отдыха</h3>
+            <div className="flex flex-wrap gap-2 mb-4 w-full">
               {city.tags.map((tag, index) => (
                 <Badge 
                   key={index} 
@@ -437,8 +437,8 @@ const CityCard = ({
             </div>
 
             {/* Local Info Section */}
-            <h3 className="font-semibold text-lg dark:text-white mb-2">Местная информация</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <h3 className="font-semibold text-lg dark:text-white mb-2 w-full">Местная информация</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm w-full">
               <div className="bg-neutral-100 dark:bg-neutral-700 p-2 rounded-lg">
                 <div className="text-neutral-500 dark:text-neutral-400">Погода</div>
                 <div className="font-medium dark:text-white flex items-center gap-1">
