@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { City } from "@shared/schema";
-import { Heart, X, Map, Image, MapPin } from "lucide-react";
+import { City, Poi } from "@shared/schema";
+import { Heart, X, Map, Image, MapPin, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVibrate } from "@/hooks/useVibrate";
+import { useStore } from "@/lib/store";
 
 type CityCardProps = {
   city: City;
@@ -13,9 +14,12 @@ type CityCardProps = {
 
 const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const vibrate = useVibrate();
+  const { loadPoisForCity, pois } = useStore();
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [cityPois, setCityPois] = useState<Poi[]>([]);
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
   
   // Используем доступный массив дополнительных фотографий из городов
   const images = [city.mainImage, ...(city.additionalImages || [])];
@@ -24,6 +28,31 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-300, 0, 300], [-15, 0, 15]);
   const animControls = useRef(null);
+  
+  // Загружаем POI для города при первом рендере
+  useEffect(() => {
+    const fetchPois = async () => {
+      try {
+        await loadPoisForCity(city.id);
+      } catch (error) {
+        console.error("Ошибка при загрузке POI:", error);
+      }
+    };
+    
+    fetchPois();
+  }, [city.id, loadPoisForCity]);
+  
+  // Фильтруем POI, соответствующие тегам города
+  useEffect(() => {
+    if (pois.length > 0) {
+      const filteredPois = pois.filter(poi => 
+        poi.cityId === city.id && 
+        // Проверяем, соответствуют ли теги POI тегам города
+        poi.tags.some(tag => city.tags.includes(tag))
+      );
+      setCityPois(filteredPois);
+    }
+  }, [pois, city.id, city.tags]);
   
   const handleLike = () => {
     vibrate(50);
@@ -44,6 +73,7 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const toggleMap = () => {
     vibrate(15);
     setShowMap(prev => !prev);
+    setSelectedPoi(null); // Сбрасываем выбранную POI при переключении
   };
   
   const nextImage = () => {
@@ -54,6 +84,11 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
   const prevImage = () => {
     vibrate(10);
     setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length);
+  };
+  
+  const handlePoiClick = (poi: Poi) => {
+    vibrate(10);
+    setSelectedPoi(poi);
   };
 
   return (
@@ -140,15 +175,99 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
               )}
             </div>
           ) : (
-            <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <MapPin className="text-primary mb-2" size={24} />
-                <p className="text-sm dark:text-white">Карта с достопримечательностями</p>
-              </div>
+            <div className="w-full h-full relative bg-neutral-100 dark:bg-neutral-700">
+              {cityPois.length > 0 ? (
+                // Фейковая карта с точками POI
+                <div className="w-full h-full relative p-2">
+                  {/* Центр города */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-primary"></div>
+                  </div>
+                  
+                  {/* POI маркеры, размещенные псевдослучайно вокруг центра */}
+                  {cityPois.map((poi, index) => {
+                    // Размещаем POI в случайных позициях вокруг центра
+                    const angle = (index / cityPois.length) * Math.PI * 2;
+                    const distance = 20 + Math.random() * 15; // От 20 до 35% от размера
+                    const left = 50 + Math.cos(angle) * distance;
+                    const top = 50 + Math.sin(angle) * distance;
+                    
+                    return (
+                      <div
+                        key={poi.id}
+                        className={`absolute w-8 h-8 -ml-4 -mt-4 cursor-pointer transition-transform ${selectedPoi?.id === poi.id ? 'scale-125' : 'hover:scale-110'}`}
+                        style={{ left: `${left}%`, top: `${top}%` }}
+                        onClick={() => handlePoiClick(poi)}
+                      >
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className={`w-3 h-3 rounded-full ${selectedPoi?.id === poi.id ? 'bg-primary' : 'bg-primary/70'}`}></div>
+                        </div>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap">
+                          <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md
+                            ${selectedPoi?.id === poi.id 
+                              ? 'bg-primary text-white scale-100' 
+                              : 'bg-white/90 dark:bg-neutral-800/90 scale-90'}
+                          `}>
+                            {poi.name}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Легенда карты */}
+                  <div className="absolute bottom-2 left-2 bg-white/80 dark:bg-neutral-800/80 px-2 py-1 rounded-md">
+                    <div className="flex items-center text-xs">
+                      <div className="w-2 h-2 rounded-full bg-primary mr-1"></div>
+                      <span>Достопримечательности ({cityPois.length})</span>
+                    </div>
+                  </div>
+                  
+                  {/* Информация о выбранном POI */}
+                  {selectedPoi && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-neutral-800/90 p-3 shadow-lg rounded-t-xl">
+                      <div className="flex items-start">
+                        <div className="flex-1 pr-2">
+                          <h4 className="font-semibold dark:text-white">{selectedPoi.name}</h4>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2">
+                            {selectedPoi.description}
+                          </p>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {selectedPoi.tags.map((tag, idx) => (
+                              <div key={idx} className="text-xs px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-700 rounded">
+                                {tag}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <button 
+                          className="p-1 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                          onClick={() => setSelectedPoi(null)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center text-center px-4">
+                    <MapPin className="text-primary mb-2" size={24} />
+                    <p className="text-sm dark:text-white">Загрузка достопримечательностей...</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                      Для города "{city.name}" будут показаны места, связанные с вашими интересами
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/50 to-transparent z-0"></div>
+          {/* Градиент для фото. В режиме карты показываем только верхнюю часть */}
+          <div className={`absolute top-0 left-0 w-full ${showMap ? 'h-20' : 'h-full'} bg-gradient-to-b from-black/50 to-transparent z-10`}></div>
           
           {/* Header with city info and tags */}
           <div className="absolute top-4 left-4 flex flex-col space-y-2 z-20">
@@ -170,13 +289,16 @@ const CityCard = ({ city, onSwipe }: CityCardProps) => {
             </div>
           </div>
           
-          {/* Toggle Map/Images button - перемещен вниз справа */}
-          <div className="absolute bottom-4 right-4 z-20">
+          {/* Toggle Map/Images button - перемещен вниз справа и повышен z-index */}
+          <div className="absolute bottom-4 right-4" style={{ zIndex: 50 }}>
             <Button
               size="icon"
               variant="secondary"
-              className="w-12 h-12 rounded-full shadow-md p-0 bg-white/90 dark:bg-neutral-700/90"
-              onClick={toggleMap}
+              className="w-12 h-12 rounded-full shadow-md p-0 bg-white/90 dark:bg-neutral-700/90 hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation(); // Предотвращаем всплытие события
+                toggleMap();
+              }}
             >
               {showMap ? <Image className="h-6 w-6" /> : <Map className="h-6 w-6" />}
             </Button>
