@@ -82,27 +82,19 @@ const CardStack = () => {
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-2">
       <div className="relative w-full max-w-md mx-auto flex justify-center items-center">
-        <AnimatePresence>
-          {filteredCities.map((city, index) => {
-            // Only render the current card
-            if (index !== currentIndex) return null;
-            
-            const cityRoutes = getRoutesForCity(city.id);
-            const cityPois = getPoisForCity(city.id);
-            
-            return (
-              <CityCard
-                key={city.id}
-                city={city}
-                pois={cityPois}
-                routes={cityRoutes}
-                isActive={true}
-                onSwipe={handleSwipe}
-                onFavorite={addToFavorites}
-                onToggleMapView={toggleMapView}
-              />
-            );
-          })}
+        <AnimatePresence mode="popLayout">
+          {currentIndex < filteredCities.length && (
+            <CityCard
+              key={filteredCities[currentIndex].id}
+              city={filteredCities[currentIndex]}
+              pois={getPoisForCity(filteredCities[currentIndex].id)}
+              routes={getRoutesForCity(filteredCities[currentIndex].id)}
+              isActive={true}
+              onSwipe={handleSwipe}
+              onFavorite={addToFavorites}
+              onToggleMapView={toggleMapView}
+            />
+          )}
         </AnimatePresence>
       </div>
     </div>

@@ -32,6 +32,7 @@ const CityCard = ({
   const [showPoiGallery, setShowPoiGallery] = useState(false);
   const [currentPoiIndex, setCurrentPoiIndex] = useState(0);
   const [currentCityImageIndex, setCurrentCityImageIndex] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   
   // Предположим, что у города может быть несколько изображений
   const cityImages = [
@@ -69,13 +70,21 @@ const CityCard = ({
   };
   
   const handleLike = () => {
-    vibrate(100);
-    onSwipe("right");
+    vibrate(50);
+    // Анимация перед удалением карточки
+    setSwipeDirection("right");
+    setTimeout(() => {
+      onSwipe("right");
+    }, 200);
   };
   
   const handleDislike = () => {
-    vibrate(100);
-    onSwipe("left");
+    vibrate(30);
+    // Анимация перед удалением карточки
+    setSwipeDirection("left");
+    setTimeout(() => {
+      onSwipe("left");
+    }, 200);
   };
   
   const togglePoiGallery = () => {
@@ -113,7 +122,7 @@ const CityCard = ({
 
   return (
     <motion.div
-      className={`w-full max-w-md h-[500px] ${isActive ? "z-10" : "z-0"}`}
+      className="w-full max-w-md h-[500px] absolute z-10"
       style={{ 
         x, 
         rotate,
@@ -122,11 +131,12 @@ const CityCard = ({
       drag={isActive && !isFlipped ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={dragEndHandler}
-      initial={{ scale: isActive ? 1 : 0.95 }}
-      animate={{ 
-        scale: isActive ? 1 : 0.95,
-        opacity: isActive ? 1 : 0.7,
-        y: isActive ? 0 : 10
+      initial={{ scale: 1, opacity: 1 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ 
+        x: swipeDirection === "left" ? -300 : 300, 
+        opacity: 0,
+        transition: { duration: 0.3 }
       }}
       transition={{ duration: 0.3 }}
     >
